@@ -1,0 +1,9 @@
+Efectuar este procedimento:
+https://github.com/engcang/PS4_Joystick_teleop_Mobile_Robots_ROS_Python
+
+Execução no Terminator:
+roslaunch robutler_bringup gazebo.launch
+roslaunch robutler_bringup bringup.launch
+roslaunch robutler_navigation navigation.launch
+rosrun joy joy_node 
+rosrun teleop_twist_joy teleop_node
