@@ -1,0 +1,5 @@
+cd ~/catkin_ws/src/PACKAGE_GITHUB
+python3 -m pip install -r yolo_detection/requirements.txt
+cd ~/catkin_ws
+rosdep install -r -y -i --from-paths .
+catkin build
