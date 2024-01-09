@@ -24,7 +24,7 @@ def arg_function():
     """
     parser = argparse.ArgumentParser(description='Definições de spawn de objetos')
     parser.add_argument("-o", "--object", required=True,  type= str, default='sphere_v',
-                        help="Objetos :")
+                        help="Objetos : sphere_v, person, coke_can")
     parser.add_argument('-place','--place_to_spawn', required=True,  type= str, default='bed',
                         help='Lugar para spawn do objeto: bed, bedroom_table, bedroom_chair, sofa, orange_table, shelf, under_kitchen_table, door')
     parser.add_argument("-rand", "--random_spawn",
@@ -36,7 +36,7 @@ def arg_function():
 
 def Set_Spawn_Points():
     
-     # Setting available spawn points
+    # Setting available spawn points
     spawn_points = {}
 
     p = Pose()                   

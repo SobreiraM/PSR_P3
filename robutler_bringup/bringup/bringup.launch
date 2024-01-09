@@ -5,6 +5,8 @@
     <arg name="x_pos" default="-6.4"/>
     <arg name="y_pos" default="-3.4"/>
     <arg name="z_pos" default="0.0"/>
+    <arg name="use_navigation" default="true"/>
+
 
     <param name="robot_description" command="$(find xacro)/xacro $(find robutler_description)/urdf/robutler.urdf.xacro"/> 
 
@@ -14,4 +16,10 @@
 
     <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-urdf -model robutler -x $(arg x_pos) -y $(arg y_pos) -z $(arg z_pos) -param robot_description" />
 
+    <group if="$(arg use_navigation)">
+        <include file="$(find robutler_navigation)/launch/localization.launch">
+        </include>
+        <include file="$(find robutler_navigation)/launch/navigation.launch">
+        </include>
+    </group>
 </launch>

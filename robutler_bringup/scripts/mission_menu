@@ -1,0 +1,164 @@
+#!/usr/bin/env python3
+
+from functools import partial
+import rospy
+from geometry_msgs.msg import Pose, Point, PoseStamped, Quaternion
+from tf.transformations import quaternion_from_euler
+
+from interactive_markers.interactive_marker_server import *
+from interactive_markers.menu_handler import *
+from visualization_msgs.msg import *
+
+server = None
+marker_pos = 1
+
+menu_handler = MenuHandler()
+
+h_first_entry = 0
+h_mode_last = 0
+
+def enableCb( feedback ):
+    handle = feedback.menu_entry_id
+    state = menu_handler.getCheckState( handle )
+
+    if state == MenuHandler.CHECKED:
+        menu_handler.setCheckState( handle, MenuHandler.UNCHECKED )
+        rospy.loginfo("Hiding first menu entry")
+        menu_handler.setVisible( h_first_entry, False )
+    else:
+        menu_handler.setCheckState( handle, MenuHandler.CHECKED )
+        rospy.loginfo("Showing first menu entry")
+        menu_handler.setVisible( h_first_entry, True )
+
+    menu_handler.reApply( server )
+    rospy.loginfo("update")
+    server.applyChanges()
+
+def modeCb(feedback):
+    global h_mode_last
+    menu_handler.setCheckState( h_mode_last, MenuHandler.UNCHECKED )
+    h_mode_last = feedback.menu_entry_id
+    menu_handler.setCheckState( h_mode_last, MenuHandler.CHECKED )
+
+    rospy.loginfo("Switching to menu entry #" + str(h_mode_last))
+    menu_handler.reApply( server )
+    print('DONE')
+    server.applyChanges()
+
+def makeBox( msg ):
+    marker = Marker()
+
+    marker.type = Marker.CUBE
+    marker.scale.x = msg.scale * 0.1
+    marker.scale.y = msg.scale * 0.1
+    marker.scale.z = msg.scale * 0.1
+    marker.pose.orientation.x = 0.2
+    marker.pose.orientation.y = 0.45
+    marker.pose.orientation.z = 0.2
+    marker.pose.orientation.w = 1.0
+    marker.color.r = 0.0
+    marker.color.g = 0.8
+    marker.color.b = 0.0
+    marker.color.a = 0.6
+
+    return marker
+
+def makeBoxControl( msg ):
+    control = InteractiveMarkerControl()
+    control.always_visible = True
+    control.markers.append( makeBox(msg) )
+    msg.controls.append( control )
+    return control
+
+def makeEmptyMarker( dummyBox=True ):
+    global marker_pos
+    int_marker = InteractiveMarker()
+    int_marker.header.frame_id = "base_link"
+    int_marker.pose.position.z = marker_pos
+    marker_pos += 1
+    int_marker.scale = 1
+    return int_marker
+
+def makeMenuMarker( name ):
+    int_marker = makeEmptyMarker()
+    int_marker.name = name
+
+    control = InteractiveMarkerControl()
+
+    control.interaction_mode = InteractiveMarkerControl.BUTTON
+    control.always_visible = True
+
+    control.markers.append( makeBox( int_marker ) )
+    int_marker.controls.append(control)
+
+    server.insert( int_marker )
+
+    
+def moveTo(feedback, x, y, z, R, P, Y, location, goal_publisher):
+    
+    print("Called move to")
+
+    p = Pose()
+    p.position = Point(x=x, y=y, z=z)
+    q = quaternion_from_euler(R, P, Y)
+    p.orientation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
+
+    ps = PoseStamped()
+    ps.pose = p
+    ps.header = Header(frame_id='map', stamp=rospy.Time.now())
+
+    print('Sending goal move to ' + location)
+    goal_publisher.publish(ps)
+
+
+
+def main():
+
+    global server
+    rospy.init_node("mission_menu")
+
+    # Create move_base_simple/goal publisher
+    
+    goal_publisher = rospy.Publisher("/move_base_simple/goal", PoseStamped, queue_size=1)
+    
+    server = InteractiveMarkerServer("missions")
+
+
+    # Initialize mission menu
+
+    global h_first_entry, h_mode_last
+    h_first_entry = menu_handler.insert( "Move To" )
+    entry = menu_handler.insert("bedroom", parent=h_first_entry,
+                                callback=partial(moveTo,
+                                                x=-2.619267, y=-1.031702, z=0,
+                                                R=0, P=0, Y=3.085831,
+                                                location='bedroom',
+                                                goal_publisher=goal_publisher))
+    entry = menu_handler.insert("living room", parent=h_first_entry, 
+                                callback=partial(moveTo,
+                                                x=2.360151, y=-0.796238, z=0,
+                                                R=0, P=0, Y=0,
+                                                location='living room',
+                                                goal_publisher=goal_publisher))
+    entry = menu_handler.insert("gym", parent=h_first_entry, 
+                                callback=partial(moveTo,
+                                                x=1.005695, y=2.076302, z=0,
+                                                R=0, P=0, Y=1.483592,
+                                                location='gym',
+                                                goal_publisher=goal_publisher))
+    entry = menu_handler.insert("kitchen", parent=h_first_entry, 
+                                callback=partial(moveTo,
+                                                x=5.346714, y=-1.828349, z=0,
+                                                R=0, P=0, Y=-0.205035,
+                                                location='kitchen',
+                                                goal_publisher=goal_publisher))
+    makeMenuMarker( "marker1" )
+
+    menu_handler.apply( server, "marker1" )
+    server.applyChanges()
+
+    rospy.spin()
+
+if __name__ == '__main__':
+    main()
+
