@@ -16,6 +16,7 @@ menu_handler = MenuHandler()
 
 h_first_entry = 0
 h_mode_last = 0
+h_second_entry = 0
 
 def enableCb( feedback ):
     handle = feedback.menu_entry_id
@@ -94,8 +95,8 @@ def makeMenuMarker( name ):
     server.insert( int_marker )
 
     
-def moveTo(feedback, x, y, z, R, P, Y, location, goal_publisher):
-    
+def moveTo(feedback, x, y, z, R, P, Y, location, goal_publisher, checkif, object):
+   
     print("Called move to")
 
     p = Pose()
@@ -126,32 +127,76 @@ def main():
 
     # Initialize mission menu
 
-    global h_first_entry, h_mode_last
+    global h_first_entry, h_mode_last, h_second_entry
     h_first_entry = menu_handler.insert( "Move To" )
     entry = menu_handler.insert("bedroom", parent=h_first_entry,
                                 callback=partial(moveTo,
                                                 x=-2.619267, y=-1.031702, z=0,
                                                 R=0, P=0, Y=3.085831,
                                                 location='bedroom',
-                                                goal_publisher=goal_publisher))
+                                                goal_publisher=goal_publisher,
+                                                checkif = 0,
+                                                object = 0))
     entry = menu_handler.insert("living room", parent=h_first_entry, 
                                 callback=partial(moveTo,
                                                 x=2.360151, y=-0.796238, z=0,
                                                 R=0, P=0, Y=0,
                                                 location='living room',
-                                                goal_publisher=goal_publisher))
+                                                goal_publisher=goal_publisher,
+                                                checkif = 0,
+                                                object = 0))
     entry = menu_handler.insert("gym", parent=h_first_entry, 
                                 callback=partial(moveTo,
                                                 x=1.005695, y=2.076302, z=0,
                                                 R=0, P=0, Y=1.483592,
                                                 location='gym',
-                                                goal_publisher=goal_publisher))
+                                                goal_publisher=goal_publisher,
+                                                checkif = 0,
+                                                object = 0))
     entry = menu_handler.insert("kitchen", parent=h_first_entry, 
                                 callback=partial(moveTo,
                                                 x=5.346714, y=-1.828349, z=0,
                                                 R=0, P=0, Y=-0.205035,
                                                 location='kitchen',
-                                                goal_publisher=goal_publisher))
+                                                goal_publisher=goal_publisher,
+                                                checkif = 0,
+                                                object = 0))
+    
+    h_second_entry = menu_handler.insert("Check if")
+    entry_check_main =  menu_handler.insert("Person in", parent=h_second_entry)
+    entry_check = menu_handler.insert("bedroom", parent=entry_check_main,
+                                callback=partial(moveTo,
+                                                x=-2.619267, y=-1.031702, z=0,
+                                                R=0, P=0, Y=3.085831,
+                                                location='bedroom',
+                                                goal_publisher=goal_publisher,
+                                                checkif = 1,
+                                                object = 'person'))
+    entry_check = menu_handler.insert("living room", parent=entry_check_main, 
+                                callback=partial(moveTo,
+                                                x=2.360151, y=-0.796238, z=0,
+                                                R=0, P=0, Y=0,
+                                                location='living room',
+                                                goal_publisher=goal_publisher,
+                                                checkif = 1,
+                                                object = 'person'))
+    entry_check = menu_handler.insert("gym", parent=entry_check_main, 
+                                callback=partial(moveTo,
+                                                x=1.005695, y=2.076302, z=0,
+                                                R=0, P=0, Y=1.483592,
+                                                location='gym',
+                                                goal_publisher=goal_publisher,
+                                                checkif = 1,
+                                                object = 'person'))
+    entry_check = menu_handler.insert("kitchen", parent=entry_check_main, 
+                                callback=partial(moveTo,
+                                                x=5.346714, y=-1.828349, z=0,
+                                                R=0, P=0, Y=-0.205035,
+                                                location='kitchen',
+                                                goal_publisher=goal_publisher,
+                                                checkif = 1,
+                                                object = 'person'))
+    
     makeMenuMarker( "marker1" )
 
     menu_handler.apply( server, "marker1" )

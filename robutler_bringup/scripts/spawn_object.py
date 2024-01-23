@@ -12,21 +12,15 @@ from geometry_msgs.msg import Pose, Point, Quaternion
 from tf.transformations import quaternion_from_euler
 
 
-# TODO
-# argparse for mode of Spawn
-# functions for each mode
-# add models
-# create function to generate models? 
-
 def arg_function():
     """
     Function to parse arguments from command line.
     """
     parser = argparse.ArgumentParser(description='Definições de spawn de objetos')
     parser.add_argument("-o", "--object", required=True,  type= str, default='sphere_v',
-                        help="Objetos : sphere_v, person, coke_can")
+                        help="Objetos : sphere_v, person_m, person_f, coke_can, wine_bottle, laptop")
     parser.add_argument('-place','--place_to_spawn', required=True,  type= str, default='bed',
-                        help='Lugar para spawn do objeto: bed, bedroom_table, bedroom_chair, sofa, orange_table, shelf, under_kitchen_table, door')
+                        help='Lugar para spawn do objeto: bed, bedroom_table,bedroom_chair, sofa, orange_table, shelf, under_kitchen_table, door, on_kitchen_table')
     parser.add_argument("-rand", "--random_spawn",
                         required=False, action="store_true",
                         help="Ativar o modo de spawn aleatório de objetos.")
@@ -91,6 +85,14 @@ def Set_Spawn_Points():
     p8.position = Point(x=6.347103, y=1.001381, z=-0.019552)
     spawn_points['under_kitchen_table'] = {'pose': p8}
 
+    # On top of kitchen_table
+    p9 = Pose()
+    p9.orientation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
+    p9.position = Point(x=6.347103, y=1.001381, z=0.817812)
+    spawn_points['on_kitchen_table'] = {'pose': p9}
+
+
+
     return spawn_points
 
 
@@ -100,11 +102,11 @@ def Set_Objects():
     package_path = rospack.get_path('robutler_description') + '/models/' 
     objects = {}
 
-    f = open(package_path + 'sphere_v/model.sdf', 'r')
-    objects['sphere_v'] = {'name': 'sphere_v', 'sdf': f.read()} 
+    f = open(package_path + 'sphere_b/model.sdf', 'r')
+    objects['sphere_b'] = {'name': 'sphere_b', 'sdf': f.read()} 
 
-    f = open(package_path + 'person/model.sdf', 'r')
-    objects['person'] = {'name': 'person', 'sdf': f.read()}
+    f = open(package_path + 'person_m/model.sdf', 'r')
+    objects['person_m'] = {'name': 'person_m', 'sdf': f.read()}
 
     f = open(package_path + 'coke_can/model.sdf', 'r')
     objects['coke_can'] = {'name': 'coke_can', 'sdf': f.read()}
@@ -135,7 +137,7 @@ def main():
     service_client = rospy.ServiceProxy(service_name, SpawnModel)
 
     if args['random_spawn']:
-        n_objects = randint(1, 8)
+        n_objects = randint(1, 10)
         print(n_objects)
         print('Spawning objects at these locations: ')
         for spawn in range(n_objects):
