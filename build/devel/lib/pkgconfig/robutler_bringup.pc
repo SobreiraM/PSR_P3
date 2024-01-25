@@ -1,0 +1,8 @@
+prefix=/home/ricardo/catkin_ws/src/PSR_P3/build/devel
+
+Name: robutler_bringup
+Description: Description of robutler_bringup
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 

@@ -1,4 +1,5 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+
 import cv2
 import rospy
 from cv_bridge import CvBridge
