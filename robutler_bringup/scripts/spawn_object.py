@@ -111,6 +111,15 @@ def Set_Objects():
     f = open(package_path + 'coke_can/model.sdf', 'r')
     objects['coke_can'] = {'name': 'coke_can', 'sdf': f.read()}
 
+    f = open(package_path + 'laptop_pc_1/model.sdf', 'r')
+    objects['laptop_pc_1'] = {'name': 'laptop_pc_1', 'sdf': f.read()}
+
+    f = open(package_path + 'laptop_pc_2/model.sdf', 'r')
+    objects['laptop_pc_2'] = {'name': 'laptop_pc_2', 'sdf': f.read()}
+
+    f = open(package_path + 'labtop_mac_1/model.sdf', 'r')
+    objects['labtop_mac_1'] = {'name': 'labtop_mac_1', 'sdf': f.read()}
+
     return objects
 
 
