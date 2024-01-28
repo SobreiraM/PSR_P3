@@ -18,7 +18,7 @@ def arg_function():
     """
     parser = argparse.ArgumentParser(description='Definições de spawn de objetos')
     parser.add_argument("-o", "--object", required=True,  type= str, default='sphere_v',
-                        help="Objetos : sphere_v, person_m, person_f, coke_can, wine_bottle, laptop")
+                        help="Objetos : sphere_b, person_m, coke_can, laptop_pc_1")
     parser.add_argument('-place','--place_to_spawn', required=True,  type= str, default='bed',
                         help='Lugar para spawn do objeto: bed, bedroom_table,bedroom_chair, sofa, orange_table, shelf, under_kitchen_table, door, on_kitchen_table')
     parser.add_argument("-rand", "--random_spawn",
@@ -113,12 +113,6 @@ def Set_Objects():
 
     f = open(package_path + 'laptop_pc_1/model.sdf', 'r')
     objects['laptop_pc_1'] = {'name': 'laptop_pc_1', 'sdf': f.read()}
-
-    f = open(package_path + 'laptop_pc_2/model.sdf', 'r')
-    objects['laptop_pc_2'] = {'name': 'laptop_pc_2', 'sdf': f.read()}
-
-    f = open(package_path + 'labtop_mac_1/model.sdf', 'r')
-    objects['labtop_mac_1'] = {'name': 'labtop_mac_1', 'sdf': f.read()}
 
     return objects
 
