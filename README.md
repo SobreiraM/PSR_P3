@@ -36,6 +36,7 @@ Clonar para a pasta catkin os seguintes repositórios, de forma a modelar o ambi
 ```roslaunch robutler_bringup bringup.launch```
 
 **Activar sistema de imagem YOLO**
+```roslaunch yolo_detection/launch/tracker.launch debug:=true```
 
 #ACRESCENTAR
 
