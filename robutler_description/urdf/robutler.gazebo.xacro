@@ -50,7 +50,7 @@
     <material>Gazebo/FlatBlack</material>
   </gazebo>
 
-<!--  -->
+<!--  
 
   <gazebo>
       <plugin name="gazebo_ros_joint_pose_trajectory"
@@ -130,7 +130,7 @@
     <material>Gazebo/FlatBlack</material>
   </gazebo>  
 
-
+-->
 
   <gazebo reference="antena_link">
     <mu1>0.1</mu1>
