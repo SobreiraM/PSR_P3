@@ -14,9 +14,13 @@
 
     <node pkg = "robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen"/>
 
-    <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-urdf -model robutler -x $(arg x_pos) -y $(arg y_pos) -z $(arg z_pos) -param robot_description" />
+    <node pkg = "robutler_bringup" type="robutler_teleop_key" name="robutler_teleop_key" output="screen"/>
 
-    <group if="$(arg use_navigation)">
+    <node pkg = "robutler_bringup" type="mission_menu" name="mission_menu" output="screen"/>
+
+    <node pkg="gazebo_ros" type="spawn_model" name="spawn_urdf" args="-urdf -model robutler -x $(arg x_pos) -y $(arg y_pos) -z $(arg z_pos) -param robot_description" />
+
+        <group if="$(arg use_navigation)">
         <include file="$(find robutler_navigation)/launch/localization.launch">
         </include>
         <include file="$(find robutler_navigation)/launch/navigation.launch">
