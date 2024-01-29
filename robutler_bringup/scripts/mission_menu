@@ -8,7 +8,23 @@ from tf.transformations import quaternion_from_euler
 from interactive_markers.interactive_marker_server import *
 from interactive_markers.menu_handler import *
 from visualization_msgs.msg import *
+from math import pi
 
+#### Yolo Detection imports ####
+import cv2
+import rospy
+from colorama import Fore, Style, init
+from cv_bridge import CvBridge
+from sensor_msgs.msg import Image
+from std_msgs.msg import String
+from ultralytics import YOLO
+from vision_msgs.msg import Detection2D, Detection2DArray, ObjectHypothesisWithPose
+from ultralytics_ros.msg import YoloResult
+from actionlib_msgs.msg import GoalStatusArray
+from actionlib_msgs.msg import GoalStatus 
+################################
+
+takePicture = False
 server = None
 marker_pos = 1
 
@@ -94,9 +110,258 @@ def makeMenuMarker( name ):
 
     server.insert( int_marker )
 
+def imageCallback(data):
+    global takePicture, local
     
+    # Convert the image message to a cv2 image
+    bridge = CvBridge()
+    cv_image = bridge.imgmsg_to_cv2(data, desired_encoding='passthrough')
+    cv_image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2RGB)
+    rospy.sleep(0.1)
+    
+    if takePicture == True:
+        # Verify if there is a file with the same name
+        # and if there is, then write the image without overwriting
+        # the previous one.
+        cv2.imwrite('./robutler_bringup/images/' + str(local) + '_' + str(rospy.get_time()) + '.jpg', cv_image)
+
+def yoloDetection(data):
+    global IDs 
+    
+    IDs = {'person' : False, 'laptop' : False, 'mouse' : False, 'remote' : False, 'keyboard' : False, 'cell phone' : False,
+           'bottle' : False, 'wine glass' : False, 'cup' : False, 'fork' : False, 'knife' : False, 'spoon' : False, 'bowl' : False, 'soccer ball' : False}
+        
+    # Print out all detections in the image that match the ID 0 (ObjectHypothesisWithPose - int id)
+    for detection in data.detections.detections:
+        if detection.results[0].id == 0:
+            IDs['person'] = True
+        if detection.results[0].id == 32:
+            IDs['soccer ball'] = True
+        if detection.results[0].id == 39:
+            IDs['bottle'] = True
+        if detection.results[0].id == 40:
+            IDs['wine glass'] = True
+        if detection.results[0].id == 41:
+            IDs['cup'] = True
+        if detection.results[0].id == 42:
+            IDs['fork'] = True
+        if detection.results[0].id == 43:
+            IDs['knife'] = True
+        if detection.results[0].id == 44:
+            IDs['spoon'] = True
+        if detection.results[0].id == 45:
+            IDs['bowl'] = True
+        if detection.results[0].id == 63:
+            IDs['laptop'] = True
+        if detection.results[0].id == 64:
+            IDs['mouse'] = True
+        if detection.results[0].id == 65:
+            IDs['remote'] = True
+        if detection.results[0].id == 66:
+            IDs['keyboard'] = True
+        if detection.results[0].id == 67:
+            IDs['cell phone'] = True
+
+def checkForObjects(object, location, goal_publisher, x, y, z):
+    global IDs
+    
+    # Rotate the robot 360x2 degrees to check
+    # if the object is detected in the room.
+    print('Rotating 360 degrees to check if ' + object + ' is in ' + location)
+    
+    # Spin the robot on its own axis 360 degrees
+    # and check if the object is detected
+    p = Pose()
+    p.position = Point(x=x, y=y, z=z)
+    q = quaternion_from_euler(0, 0, 0)
+    p.orientation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
+    ps = PoseStamped()
+    ps.pose = p
+    ps.header = Header(frame_id='map', stamp=rospy.Time.now())
+    goal_publisher.publish(ps)
+    
+    rospy.sleep(2)
+    
+    q = quaternion_from_euler(0, 0, 3.14)
+    p.orientation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
+    ps.pose = p
+    ps.header = Header(frame_id='map', stamp=rospy.Time.now())
+    goal_publisher.publish(ps)
+    
+    startTime = rospy.get_time()
+    noneDetected = False
+    
+    while True:
+        currTime = rospy.get_time()
+        rospy.sleep(0.1)
+        if IDs[object] == True:
+            print(object + ' detected in ' + location)
+            q = quaternion_from_euler(0, 0, 0)
+            break
+        else:
+            if currTime - startTime > 5:
+                noneDetected = True
+                break
+    
+    if noneDetected == True:
+        q = quaternion_from_euler(0, 0, 6.14)
+        p.orientation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
+        ps.pose = p
+        ps.header = Header(frame_id='map', stamp=rospy.Time.now())
+        goal_publisher.publish(ps)
+        
+        startTime = rospy.get_time()
+        while True:
+            currTime = rospy.get_time()
+            rospy.sleep(0.1)
+            if IDs[object] == True:
+                print(object + ' detected in ' + location)
+                q = quaternion_from_euler(0, 0, 0)
+                break
+            else:
+                if currTime - startTime > 5:
+                    q = quaternion_from_euler(0, 0, Y)
+                    print('No person detected in ' + location)
+                    break
+    
+    
+    p.orientation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
+    ps.pose = p
+    ps.header = Header(frame_id='map', stamp=rospy.Time.now())
+    goal_publisher.publish(ps)
+
+def checkTable(location):
+    global IDs
+
+    # IDs fitting to detect:
+    """
+    39: 'bottle',
+    40: 'wine glass',
+    41: 'cup',
+    42: 'fork',
+    43: 'knife',
+    44: 'spoon',
+    45: 'bowl',
+    
+    - Living Room
+    63: 'laptop',
+    64: 'mouse',
+    65: 'remote',
+    66: 'keyboard',
+    67: 'cell phone',
+    """
+    objects = ['bottle', 'wine glass', 'cup', 'fork', 'knife', 'spoon', 'bowl', 'laptop', 'mouse', 'remote', 'keyboard', 'cell phone']
+    detections = [0,0,0,0,0,0,0,0,0,0,0,0]
+    noneDetected = True
+    
+    # Cycle through the objects and check if any of them are detected
+    for object in objects:
+        if IDs[object] == True:
+            detections[objects.index(object)] = 1
+            noneDetected = False
+            
+    if noneDetected == True:
+        print('No objects detected on the table in ' + location)
+    else:
+        print('Objects detected on the table in ' + location + ':')
+        for object in objects:
+            if detections[objects.index(object)] == 1:
+                print(object, end=';')
+        print()
+
+def takePictureCallback(location):
+    global takePicture, local
+    
+    print('Taking a picture of ' + location)
+    
+    local = location
+    takePicture = True
+    rospy.sleep(0.1)
+    takePicture = False
+    
+    print('Picture taken')
+  
+def moveToHelper(feedback,x,y,z,R,P,Y,location,goal_publisher):
+    p = Pose()
+    p.position = Point(x=x, y=y, z=z)
+    q = quaternion_from_euler(R, P, Y)
+    p.orientation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
+
+    ps = PoseStamped()
+    ps.pose = p
+    ps.header = Header(frame_id='map', stamp=rospy.Time.now())
+
+    print('Sending goal move to: ' + location)
+    
+    # Publish the goal to the /move_base_simple/goal topic once
+    # and wait for the robot to reach the goal.
+    goal_publisher.publish(ps)
+    
+def someoneHomeHelper(location):
+    detected = False
+    while True:
+        rospy.sleep(0.2)
+        status = rospy.wait_for_message('/move_base/status', GoalStatusArray)
+        if status.status_list[0].status == 1:
+            print("Searching, waiting for it to reach a new place...")
+            while True:
+                rospy.sleep(0.2)
+                status = rospy.wait_for_message('/move_base/status', GoalStatusArray)
+                if IDs['person'] == True:
+                    print('Person detected in: ' + location)
+                    print('Ending mission')
+                    detected = True
+                    break
+                if status.status_list[0].status == 3:
+                    print('New place reached!')
+                    break               
+            break
+        
+    return detected
+
+def someoneHomeCallback(feedback, goal_publisher, location):
+    # Starting coordinates (Bedroom)
+    location = "bedroom"
+    x=-2.62; y=-1.0; z=0.0
+    R=0; P=0; Y=(-3.14/2)-0.6
+    moveToHelper(feedback, x, y, z, R, P, Y, location, goal_publisher)
+    detected = someoneHomeHelper(location)
+    
+    if detected == False:
+        # Go to the living room now
+        location = "living room"
+        x=2.360151; y=-0.796238; z=0.0
+        R=0; P=0; Y=0
+        moveToHelper(feedback, x, y, z, R, P, Y, location, goal_publisher)
+        detected = someoneHomeHelper(location)
+    
+    if detected == False:
+        # Go to the gym now
+        location = "gym"
+        x=1.005695; y=2.076302; z=0.0
+        R=0; P=0; Y=3.14
+        moveToHelper(feedback, x, y, z, R, P, Y, location, goal_publisher)
+        detected = someoneHomeHelper(location)
+    
+    if detected == False:
+        # Go to the kitchen now
+        location = "kitchen"
+        x=5.346714; y=-1.828349; z=0.0
+        R=0; P=0; Y=-0.205035
+        moveToHelper(feedback, x, y, z, R, P, Y, location, goal_publisher)
+        detected = someoneHomeHelper(location)
+    
+    if detected == False:
+        # Go back to the bedroom
+        location = "bedroom"
+        x=-2.62; y=-1.0; z=0.0
+        R=0; P=0; Y=(-3.14/2)-0.6
+        moveToHelper(feedback, x, y, z, R, P, Y, location, goal_publisher)
+        detected = someoneHomeHelper(location)
+
 def moveTo(feedback, x, y, z, R, P, Y, location, goal_publisher, checkif, object):
-   
+    global IDs
+    
     print("Called move to")
 
     p = Pose()
@@ -108,10 +373,38 @@ def moveTo(feedback, x, y, z, R, P, Y, location, goal_publisher, checkif, object
     ps.pose = p
     ps.header = Header(frame_id='map', stamp=rospy.Time.now())
 
-    print('Sending goal move to ' + location)
+    print('Sending goal move to: ' + location)
+    
+    # Publish the goal to the /move_base_simple/goal topic once
+    # and wait for the robot to reach the goal.
     goal_publisher.publish(ps)
 
-
+    # Wait for the robot to reach the goal by listening to the /move_base/status topic
+    # and checking if the status is 3 (goal reached).
+    while True:
+        rospy.sleep(0.2)
+        status = rospy.wait_for_message('/move_base/status', GoalStatusArray)
+        if status.status_list[0].status == 1:
+            print("Goal active, waiting for it to finish...")
+            while True:
+                rospy.sleep(0.2)
+                status = rospy.wait_for_message('/move_base/status', GoalStatusArray)
+                if status.status_list[0].status == 3:
+                    print('Goal reached!')
+                    break
+            break
+    
+    # Check if = 0  -> Move to a location
+    # Check if = 1  -> Check for object in a location
+    # Check if = 2  -> Take a picture of a location
+    # Check if = 3  -> Checks the table for objects, detecting if it is clean or not
+    if checkif == 1:
+        checkForObjects(object, location, goal_publisher, x, y, z)
+    if checkif == 2:
+        rospy.sleep(1.5)
+        takePictureCallback(location)
+    if checkif == 3:
+        checkTable(location)
 
 def main():
 
@@ -124,14 +417,20 @@ def main():
     
     server = InteractiveMarkerServer("missions")
 
+    # Create s subscriever for Yolo detection
+    yoloTopic = '/yolo_result'
+    rospy.Subscriber(yoloTopic, YoloResult, yoloDetection)
+    #rospy.init_node('yoloSubscriber', anonymous=True)
+
+    rospy.Subscriber("/camera/rgb/image_raw_upper", Image, imageCallback)
 
     # Initialize mission menu
 
-    global h_first_entry, h_mode_last, h_second_entry
+    global h_first_entry, h_mode_last, h_second_entry, h_third_entry, h_forth_entry, h_fith_entry
     h_first_entry = menu_handler.insert( "Move To" )
     entry = menu_handler.insert("bedroom", parent=h_first_entry,
                                 callback=partial(moveTo,
-                                                x=-2.619267, y=-1.031702, z=0,
+                                                x=-2.62, y=-1.0, z=0.0,
                                                 R=0, P=0, Y=3.085831,
                                                 location='bedroom',
                                                 goal_publisher=goal_publisher,
@@ -161,12 +460,12 @@ def main():
                                                 goal_publisher=goal_publisher,
                                                 checkif = 0,
                                                 object = 0))
-    
+        
     h_second_entry = menu_handler.insert("Check if")
     entry_check_main =  menu_handler.insert("Person in", parent=h_second_entry)
     entry_check = menu_handler.insert("bedroom", parent=entry_check_main,
                                 callback=partial(moveTo,
-                                                x=-2.619267, y=-1.031702, z=0,
+                                                x=-2.62, y=-1.0, z=0.0,
                                                 R=0, P=0, Y=3.085831,
                                                 location='bedroom',
                                                 goal_publisher=goal_publisher,
@@ -196,6 +495,95 @@ def main():
                                                 goal_publisher=goal_publisher,
                                                 checkif = 1,
                                                 object = 'person'))
+    entry_check_main2 =  menu_handler.insert("Ball in", parent=h_second_entry)
+    entry_check = menu_handler.insert("bedroom", parent=entry_check_main2,
+                                callback=partial(moveTo,
+                                                x=-2.62, y=-1.0, z=0.0,
+                                                R=0, P=0, Y=3.085831,
+                                                location='bedroom',
+                                                goal_publisher=goal_publisher,
+                                                checkif = 1,
+                                                object = 'soccer ball'))
+    entry_check = menu_handler.insert("living room", parent=entry_check_main2, 
+                                callback=partial(moveTo,
+                                                x=2.360151, y=-0.796238, z=0,
+                                                R=0, P=0, Y=0,
+                                                location='living room',
+                                                goal_publisher=goal_publisher,
+                                                checkif = 1,
+                                                object = 'soccer ball'))
+    entry_check = menu_handler.insert("gym", parent=entry_check_main2, 
+                                callback=partial(moveTo,
+                                                x=1.005695, y=2.076302, z=0,
+                                                R=0, P=0, Y=1.483592,
+                                                location='gym',
+                                                goal_publisher=goal_publisher,
+                                                checkif = 1,
+                                                object = 'soccer ball'))
+    entry_check = menu_handler.insert("kitchen", parent=entry_check_main2, 
+                                callback=partial(moveTo,
+                                                x=5.346714, y=-1.828349, z=0,
+                                                R=0, P=0, Y=-0.205035,
+                                                location='kitchen',
+                                                goal_publisher=goal_publisher,
+                                                checkif = 1,
+                                                object = 'soccer ball'))
+    
+    h_third_entry = menu_handler.insert("Take Picture of")
+    entry_check = menu_handler.insert("bedroom", parent=h_third_entry,
+                                callback=partial(moveTo,
+                                                x=-2.62, y=-1.0, z=0.0,
+                                                R=0, P=0, Y=2.4,
+                                                location='bedroom',
+                                                goal_publisher=goal_publisher,
+                                                checkif = 2,
+                                                object = 'person'))
+    entry_check = menu_handler.insert("living room", parent=h_third_entry, 
+                                callback=partial(moveTo,
+                                                x=2.360151, y=0, z=0,
+                                                R=0, P=0, Y=(-3.14/2)-0.6,
+                                                location='living room',
+                                                goal_publisher=goal_publisher,
+                                                checkif = 2,
+                                                object = 'person'))
+    entry_check = menu_handler.insert("gym", parent=h_third_entry, 
+                                callback=partial(moveTo,
+                                                x=1.005695, y=2.076302, z=0,
+                                                R=0, P=0, Y=(1.483592/2)-0.55,
+                                                location='gym',
+                                                goal_publisher=goal_publisher,
+                                                checkif = 2,
+                                                object = 'person'))
+    entry_check = menu_handler.insert("kitchen", parent=h_third_entry, 
+                                callback=partial(moveTo,
+                                                x=5.346714, y=-1.828349, z=0,
+                                                R=0, P=0, Y=-0.205035,
+                                                location='kitchen',
+                                                goal_publisher=goal_publisher,
+                                                checkif = 2,
+                                                object = 'person'))
+    
+    h_forth_entry = menu_handler.insert("Check table from")
+    entry_check = menu_handler.insert("living room", parent=h_forth_entry, 
+                                callback=partial(moveTo,
+                                                x=2.1, y=-0.5, z=0,
+                                                R=0, P=0, Y=(-3.14/2)-0.6,
+                                                location='living room',
+                                                goal_publisher=goal_publisher,
+                                                checkif = 3,
+                                                object = 'person'))
+    entry_check = menu_handler.insert("kitchen", parent=h_forth_entry, 
+                                callback=partial(moveTo,
+                                                x=5, y=-0.1, z=0,
+                                                R=0, P=0, Y=0.6,
+                                                location='kitchen',
+                                                goal_publisher=goal_publisher,
+                                                checkif = 3,
+                                                object = 'person'))
+    h_fith_entry = menu_handler.insert("Someone home?", callback=
+                                       partial(someoneHomeCallback,
+                                               goal_publisher=goal_publisher,
+                                               location='bedroom'))
     
     makeMenuMarker( "marker1" )
 
