@@ -186,6 +186,196 @@
   </link>
 
 
+
+<!-- Robot arm -->
+  <joint name="gripper_joint" type="fixed">
+    <parent link="base_scan"/>
+    <child link="gripper_link"/>
+    <origin xyz="-0.1 0.0 -0.0405" rpy="0 0 0"/>
+  </joint>
+    
+  <link name="gripper_link">
+    <visual>
+      <origin xyz="0.0 0.0 0.4" rpy="0 0 0"/>
+      <geometry>
+        <cylinder length="0.8" radius="0.005" />
+      </geometry>
+      <material name="blue"/>
+    </visual>
+
+    <collision>
+      <origin xyz="0.0 0.0 0.4" rpy="0 0 0"/>
+      <geometry>
+        <cylinder length="0.8" radius="0.005" />
+      </geometry>
+    </collision>
+
+    <inertial>
+      <mass value="0.114" />
+      <origin xyz="0 0 0" />
+      <inertia ixx="0.001" ixy="0.0" ixz="0.0"
+               iyy="0.001" iyz="0.0"
+               izz="0.001" />
+    </inertial> 
+  </link>
+
+  <joint name="gripper_extension" type="prismatic">
+      <parent link="gripper_link"/>
+      <child link="gripper_pole"/>
+      <origin xyz="0 0 0.3" rpy="0 0 0" />
+      <limit effort="1000.0" lower="-0.1" upper="0.45" velocity="0.5"/>
+      <axis xyz="0 0 1"/>
+  </joint>
+
+  <link name="gripper_pole">
+    <visual>
+      <geometry>
+        <cylinder length="0.1" radius="0.01"/>
+      </geometry>
+      <origin rpy="0.0 0.0 0.0 " xyz="0 0 0"/>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.1" radius="0.01"/>
+      </geometry>
+      <origin rpy="0.0 0.0 0.0 " xyz="0 0 0"/>
+    </collision>
+    <inertial>
+      <mass value="0.05"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+  </link>
+
+  <joint name="claw_joint" type="fixed">
+    <parent link="gripper_pole"/>
+    <child link="claw_support"/>
+    <origin xyz="0.0 0.0 0.0" rpy="0 1.56 0"/>
+  </joint>
+
+  <link name="claw_support">
+    <visual>
+      <geometry>
+        <cylinder length="0.3" radius="0.005"/>
+      </geometry>
+      <origin rpy="0.0 0.0 0.0 " xyz="0 0 0.15"/>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.3" radius="0.005"/>
+      </geometry>
+      <origin rpy="0.0 0.0 0.0 " xyz="0 0 0.15"/>
+    </collision>
+    <inertial>
+      <mass value="0.05"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+  </link>
+
+  <joint name="left_gripper_joint" type="revolute">
+    <axis xyz="0 0 1"/>
+    <limit effort="1000.0" lower="0.0" upper="0.548" velocity="0.5"/>
+    <origin rpy="0 -1.55 0" xyz="0 0 0.3"/>
+    <parent link="claw_support"/>
+    <child link="left_gripper"/>
+  </joint>
+
+
+  <link name="left_gripper">
+    <visual>
+      <origin rpy="0.0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://urdf_tutorial/meshes/l_finger.dae"/>
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="package://urdf_tutorial/meshes/l_finger.dae"/>
+      </geometry>
+      <origin rpy="0.0 0 0" xyz="0 0 0"/>
+    </collision>
+    <inertial>
+      <mass value="0.05"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+  </link>
+
+  <joint name="left_tip_joint" type="fixed">
+    <parent link="left_gripper"/>
+    <child link="left_tip"/>
+  </joint>
+
+  <link name="left_tip">
+    <visual>
+      <origin rpy="0.0 0 0" xyz="0.09137 0.00495 0"/>
+      <geometry>
+        <mesh filename="package://urdf_tutorial/meshes/l_finger_tip.dae"/>
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="package://urdf_tutorial/meshes/l_finger_tip.dae"/>
+      </geometry>
+      <origin rpy="0.0 0 0" xyz="0.09137 0.00495 0"/>
+    </collision>
+    <inertial>
+      <mass value="0.05"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+  </link>
+
+  <joint name="right_gripper_joint" type="revolute">
+    <axis xyz="0 0 1"/>
+    <limit effort="1000.0" lower="-0.548" upper="0.0" velocity="0.5"/>
+    <origin rpy="0 -1.55 0" xyz="0 0 0.3"/>
+    <parent link="claw_support"/>
+    <child link="right_gripper"/>
+  </joint>
+
+  <link name="right_gripper">
+    <visual>
+      <origin rpy="-3.1415 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://urdf_tutorial/meshes/l_finger.dae"/>
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="package://urdf_tutorial/meshes/l_finger.dae"/>
+      </geometry>
+      <origin rpy="-3.1415 0 0" xyz="0 0 0"/>
+    </collision>
+    <inertial>
+      <mass value="0.05"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+  </link>
+
+  <joint name="right_tip_joint" type="fixed">
+    <parent link="right_gripper"/>
+    <child link="right_tip"/>
+  </joint>
+
+  <link name="right_tip">
+    <visual>
+      <origin rpy="-3.1415 0 0" xyz="0.09137 0.00495 0"/>
+      <geometry>
+        <mesh filename="package://urdf_tutorial/meshes/l_finger_tip.dae"/>
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="package://urdf_tutorial/meshes/l_finger_tip.dae"/>
+      </geometry>
+      <origin rpy="-3.1415 0 0" xyz="0.09137 0.00495 0"/>
+    </collision>
+    <inertial>
+      <mass value="0.05"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+  </link>
+
+<!-- End Robot Arm -->
+
   <!-- upper -->
   <joint name="antena_joint" type="fixed">
     <parent link="base_scan"/>
@@ -195,9 +385,9 @@
 
   <link name="antena_link">
     <visual>
-      <origin xyz="0.0 0.0 0.3" rpy="0 0 0"/>
+      <origin xyz="0.0 0.0 0.4" rpy="0 0 0"/>
       <geometry>
-        <cylinder length="0.6" radius="0.005" />
+        <cylinder length="0.8" radius="0.005" />
       </geometry>
       <material name="orange"/>
     </visual>
@@ -218,14 +408,12 @@
     </inertial> -->
   </link>
 
-
   <joint name="camera_upper_joint" type="fixed">
-    <origin xyz="0.0 0.0 0.6" rpy="0 0 0"/>
+    <origin xyz="0.0 0.0 0.8" rpy="0 0 0"/>
     <parent link="antena_link"/>
     <child link="camera_upper_link"/>
   </joint>
 
-<!-- acrescentar ao gazebo? -->
   <link name="camera_upper_link"> 
     <visual>
       <origin xyz="0.0 0.0 0.0" rpy="0 0 0"/>
