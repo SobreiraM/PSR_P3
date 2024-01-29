@@ -18,7 +18,7 @@ def arg_function():
     Function to parse arguments from command line.
     """
     parser = argparse.ArgumentParser(description='Definições de spawn de objetos')
-    parser.add_argument("-o", "--object", required=True,  type= str, default='sphere_v',
+    parser.add_argument("-o", "--object", required=True,  type= str, default='sphere_b',
                         help="Objetos : sphere_b, coke_can, laptop_pc_1, keyboard, mouse, human_female_1, human_male_1")
     parser.add_argument('-place','--place_to_spawn', required=True,  type= str, default='bed',
                         help='Lugar para spawn do objeto: bed, bedroom_table,bedroom_chair, sofa, orange_table, shelf, under_kitchen_table, door, on_kitchen_table')
