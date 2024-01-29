@@ -187,7 +187,7 @@
 
 
 
-<!-- Robot arm -->
+<!-- Robot arm 
   <joint name="gripper_joint" type="fixed">
     <parent link="base_scan"/>
     <child link="gripper_link"/>
@@ -373,7 +373,7 @@
       <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
     </inertial>
   </link>
-
+-->
 <!-- End Robot Arm -->
 
   <!-- upper -->
