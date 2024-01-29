@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from math import pi
 import random
 from random import randint
 import uuid
@@ -18,7 +19,7 @@ def arg_function():
     """
     parser = argparse.ArgumentParser(description='Definições de spawn de objetos')
     parser.add_argument("-o", "--object", required=True,  type= str, default='sphere_v',
-                        help="Objetos : sphere_b, person_m, coke_can, laptop_pc_1")
+                        help="Objetos : sphere_b, coke_can, laptop_pc_1, keyboard, mouse, human_female_1, human_male_1")
     parser.add_argument('-place','--place_to_spawn', required=True,  type= str, default='bed',
                         help='Lugar para spawn do objeto: bed, bedroom_table,bedroom_chair, sofa, orange_table, shelf, under_kitchen_table, door, on_kitchen_table')
     parser.add_argument("-rand", "--random_spawn",
@@ -32,6 +33,7 @@ def Set_Spawn_Points():
     
     # Setting available spawn points
     spawn_points = {}
+    objects = {}
 
     p = Pose()                   
     q = quaternion_from_euler(0,0,0)    # var q and orientation will be the same for every location
@@ -43,7 +45,7 @@ def Set_Spawn_Points():
     p1.position = Point(x=-6.033466, y=1.971232, z=0.644345) #coordinates of the location
     spawn_points['bed'] = {'pose':p1}
 
-    # On bedroom table
+     # On bedroom table
     p2 = Pose()
     p2.orientation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
     p2.position = Point(x=-8.910127, y=1.585621, z=0.744070)
@@ -105,14 +107,23 @@ def Set_Objects():
     f = open(package_path + 'sphere_b/model.sdf', 'r')
     objects['sphere_b'] = {'name': 'sphere_b', 'sdf': f.read()} 
 
-    f = open(package_path + 'person_m/model.sdf', 'r')
-    objects['person_m'] = {'name': 'person_m', 'sdf': f.read()}
-
     f = open(package_path + 'coke_can/model.sdf', 'r')
     objects['coke_can'] = {'name': 'coke_can', 'sdf': f.read()}
 
     f = open(package_path + 'laptop_pc_1/model.sdf', 'r')
-    objects['laptop_pc_1'] = {'name': 'laptop_pc_1', 'sdf': f.read()}
+    objects['laptop_pc_1'] = {'name': 'laptop_pc_1', 'sdf': f.read()}   
+
+    f = open(package_path + 'keyboard/model.sdf', 'r')
+    objects['keyboard'] = {'name': 'keyboard', 'sdf': f.read()}
+
+    f = open(package_path + 'mouse/model.sdf', 'r')
+    objects['mouse'] = {'name': 'mouse', 'sdf': f.read()}
+
+    f = open(package_path + 'human_female_1/model.sdf', 'r')
+    objects['human_female_1'] = {'name': 'human_female_1', 'sdf': f.read()}
+    
+    f = open(package_path + 'human_male_1/model.sdf', 'r')
+    objects['human_male_1'] = {'name': 'human_male_1', 'sdf': f.read()}
 
     return objects
 
