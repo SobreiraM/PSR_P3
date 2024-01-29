@@ -3,7 +3,7 @@
 
 # Initiallize the script:
 #   roslaunch yolo_detection/launch/tracker.launch debug:=true
-
+#   rosrun robutler_bringup mission_menu
 
 import cv_bridge
 import numpy as np
